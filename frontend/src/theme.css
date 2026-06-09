@@ -1,0 +1,38 @@
+:root {
+  --primary: #1d4ed8;
+  --primary-dark: #1e40af;
+  --primary-darker: #1e3a8a;
+  --primary-light: #dbeafe;
+  --primary-lighter: #eff6ff;
+  --success: #059669;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --info: #0891b2;
+  --page-bg: #eff6ff;
+  --card-bg: #ffffff;
+  --border: #bfdbfe;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: var(--page-bg);
+  color: #1e293b;
+  margin: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
+  outline: none;
+}
+
+table tr:hover td {
+  background-color: #eff6ff;
+}
