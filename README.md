@@ -45,7 +45,7 @@ backend/    -> Node.js & Express API
 ### Clone the repository
 
 ```bash
-git clone YOUR_REPOSITORY_URL
+git clone [YOUR_REPOSITORY_URL](https://github.com/adarssshhh0-pixel/LoginApp)
 cd LoginApp
 ```
 
