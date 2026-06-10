@@ -58,6 +58,8 @@ function Dashboard() {
     { to: "/departments",   label: "Departments",   icon: "🏬", bg: "#0e7490", show: role === "admin" },
     { to: "/skills",        label: "Skills",        icon: "🛠️", bg: "#4338ca", show: role === "admin" },
     { to: "/manage-roles",  label: "Manage Roles",  icon: "🔐", bg: "#be185d", show: role === "admin" },
+    { to: "/attendance",    label: "Mark Attendance", icon: "📅", bg: "#059669", show: ["admin","hr","manager"].includes(role) },
+    { to: "/my-attendance", label: "My Attendance",   icon: "🗓️", bg: "#0891b2", show: true },
   ].filter(a => a.show);
 
   return (
@@ -73,6 +75,8 @@ function Dashboard() {
           <Link to="/leave-balance" style={styles.navLink}>Leave Balance</Link>
           <Link to="/apply-leave"   style={styles.navLink}>Apply Leave</Link>
           <Link to="/notifications" style={styles.navLink}>🔔</Link>
+          <Link to="/my-attendance" style={styles.navLink}>🗓️ My Attendance</Link>
+          {["manager","hr","admin"].includes(role) && <Link to="/attendance" style={styles.navLink}>📅 Attendance</Link>}
           {["manager","hr","admin"].includes(role) && <Link to="/leave-approval" style={styles.navLink}>Approve Leaves</Link>}
           {["hr","admin"].includes(role)           && <Link to="/employees"      style={styles.navLink}>Employees</Link>}
           {["hr","admin"].includes(role)           && <Link to="/reports"        style={styles.navLink}>Reports</Link>}

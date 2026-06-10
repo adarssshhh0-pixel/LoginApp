@@ -19,6 +19,8 @@ import Assets         from "./pages/Assets";
 import Reports        from "./pages/Reports";
 import Profile        from "./pages/Profile";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import Attendance   from "./pages/Attendance";
+import MyAttendance from "./pages/MyAttendance";
 
 function App() {
   return (
@@ -85,6 +87,14 @@ function App() {
           </ProtectedRoute>
         }/>
       </Routes>
+      <Route path="/attendance" element={
+  <ProtectedRoute roles={["admin","hr","manager"]}>
+    <Attendance />
+  </ProtectedRoute>
+      } />
+      <Route path="/my-attendance" element={
+        <ProtectedRoute><MyAttendance /></ProtectedRoute>
+      } />
     </BrowserRouter>
   );
 }

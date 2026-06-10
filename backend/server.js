@@ -18,9 +18,10 @@ const assetRoutes        = require("./routes/assets");
 const notificationRoutes = require("./routes/notifications");
 const reportRoutes       = require("./routes/reports");
 const pool               = require("./config/db");
-
+const attendanceRoutes = require("./routes/attendance");
 const app = express();
 
+app.use("/api/attendance", attendanceRoutes);
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
