@@ -6,7 +6,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
 const logger = require("./utils/logger");
-
+const compression = require("compression");
 const authRoutes         = require("./routes/auth");
 const userRoutes         = require("./routes/user");
 const departmentRoutes   = require("./routes/departments");
@@ -39,6 +39,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(compression()); // ← add this before routes
+
 // Routes
 app.use("/api/auth",          authRoutes);
 app.use("/api/user",          userRoutes);
@@ -69,4 +71,20 @@ app.get("/test-db", async (req, res) => {
 
 app.listen(process.env.PORT, () => {
   logger.info(`Server running on port ${process.env.PORT}`);
+});
+
+// TEMP — Email test route
+app.get("/test-email", async (req, res) => {
+  try {
+    const sendOTPEmail = require("./utils/mailer");
+    await sendOTPEmail({
+      to: "developerchacha4@gmail.com",  // ← put your actual email here
+      name: "Test User",
+      otp: "123456",
+    });
+    res.json({ success: true, message: "Email sent!" });
+  } catch (error) {
+    console.log("EMAIL ERROR:", error.message);
+    res.json({ success: false, error: error.message });
+  }
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { handleApiError } from "../utils/apiError";
+import { setCache, getCache } from "../utils/cache";
 
 function EmployeeList() {
   const [employees, setEmployees] = useState([]);
@@ -12,10 +13,19 @@ function EmployeeList() {
 
   useEffect(() => {
     const fetchEmployees = async () => {
+      // Check cache first
+      const cached = getCache("employees");
+      if (cached) {
+        setEmployees(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await axios.get("http://localhost:5000/api/employees", {
           headers: { Authorization: token },
         });
+        setCache("employees", res.data, 30); // cache for 30 seconds
         setEmployees(res.data);
       } catch (err) {
         handleApiError(err, navigate);

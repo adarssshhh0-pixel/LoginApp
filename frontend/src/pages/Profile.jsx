@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { handleApiError } from "../utils/apiError";
@@ -10,7 +10,7 @@ function Profile() {
   const token    = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/user/profile", { headers: { Authorization: token } });
       setUser(res.data.user);
@@ -18,9 +18,9 @@ function Profile() {
       localStorage.setItem("name", res.data.user.name);
       if (res.data.user.avatar) localStorage.setItem("avatar", res.data.user.avatar);
     } catch (err) { handleApiError(err, navigate); }
-  };
+  }, [token, navigate]);
 
-  useEffect(() => { fetchProfile(); }, [token, navigate]);
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
