@@ -64,14 +64,24 @@ router.put("/role/:id", auth, async (req, res) => {
 });
 
 const multer = require("multer");
-const path = require("path");
+const path   = require("path");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) =>
-    cb(null, `avatar_${req.user.id}_${Date.now()}${path.extname(file.originalname)}`),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `avatar_${Date.now()}${ext}`);  // ← removed req.user.id (not available yet)
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only images allowed"));
+  },
+});
 
 // UPDATE profile avatar
 router.post("/avatar", auth, upload.single("avatar"), async (req, res) => {

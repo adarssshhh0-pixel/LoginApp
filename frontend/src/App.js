@@ -18,33 +18,40 @@ import Notifications  from "./pages/Notifications";
 import Assets         from "./pages/Assets";
 import Reports        from "./pages/Reports";
 import Profile        from "./pages/Profile";
+import Attendance     from "./pages/Attendance";
+import MyAttendance   from "./pages/MyAttendance";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import Attendance   from "./pages/Attendance";
-import MyAttendance from "./pages/MyAttendance";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* Public */}
         <Route path="/"                element={<Login />} />
         <Route path="/signup"          element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
 
-        {/* All logged in */}
-        <Route path="/dashboard"    element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/profile"      element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/apply-leave"  element={<ProtectedRoute><ApplyLeave /></ProtectedRoute>} />
-        <Route path="/my-leaves"    element={<ProtectedRoute><MyLeaves /></ProtectedRoute>} />
-        <Route path="/leave-balance"element={<ProtectedRoute><LeaveBalance /></ProtectedRoute>} />
-        <Route path="/notifications"element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-        <Route path="/assets"       element={<ProtectedRoute><Assets /></ProtectedRoute>} />
+        {/* All logged in users */}
+        <Route path="/dashboard"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/apply-leave"   element={<ProtectedRoute><ApplyLeave /></ProtectedRoute>} />
+        <Route path="/my-leaves"     element={<ProtectedRoute><MyLeaves /></ProtectedRoute>} />
+        <Route path="/leave-balance" element={<ProtectedRoute><LeaveBalance /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route path="/assets"        element={<ProtectedRoute><Assets /></ProtectedRoute>} />
+        <Route path="/my-attendance" element={<ProtectedRoute><MyAttendance /></ProtectedRoute>} />
 
         {/* Manager, HR, Admin */}
         <Route path="/leave-approval" element={
           <ProtectedRoute roles={["manager","hr","admin"]}>
             <LeaveApproval />
+          </ProtectedRoute>
+        }/>
+        <Route path="/attendance" element={
+          <ProtectedRoute roles={["admin","hr","manager"]}>
+            <Attendance />
           </ProtectedRoute>
         }/>
 
@@ -86,15 +93,8 @@ function App() {
             <ManageRoles />
           </ProtectedRoute>
         }/>
+
       </Routes>
-      <Route path="/attendance" element={
-  <ProtectedRoute roles={["admin","hr","manager"]}>
-    <Attendance />
-  </ProtectedRoute>
-      } />
-      <Route path="/my-attendance" element={
-        <ProtectedRoute><MyAttendance /></ProtectedRoute>
-      } />
     </BrowserRouter>
   );
 }
