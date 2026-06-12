@@ -1,3 +1,34 @@
+/* ── Layout additions ── */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f4f6fa;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hide sidebar scrollbar */
+aside::-webkit-scrollbar { display: none; }
+nav::-webkit-scrollbar   { display: none; }
+
+/* Table row hover */
+tbody tr:hover { background-color: #fafbfc; }
+
+/* Logout button hover */
+button[title="Logout"]:hover {
+  color: #ef4444 !important;
+  background-color: rgba(239,68,68,0.1) !important;
+}
+
+/* Responsive — collapse sidebar on mobile */
+@media (max-width: 768px) {
+  aside  { width: 64px !important; }
+  main   { margin-left: 64px !important; }
+}
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

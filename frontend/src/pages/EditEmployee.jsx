@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { handleApiError } from "../utils/apiError";
+import Layout from "../components/Layout";
 
 function EditEmployee() {
   const { id } = useParams();
@@ -109,7 +110,14 @@ function EditEmployee() {
             <label style={styles.label}>Address</label>
             <textarea style={{ ...styles.input, height: 70, resize: "vertical" }} name="address" value={form.address} onChange={handleChange} required />
           </div>
-
+           <div style={styles.wrapper}>
+    ...
+  </div>
+   <Layout>
+    <div style={{ ...styles.wrapper, backgroundColor: "transparent", minHeight: "auto" }}>
+      ...
+    </div>
+  </Layout>
           <div style={styles.sectionTitle}>🛠️ Skills</div>
           <div style={styles.skillsGrid}>
             {skills.map(s => (
@@ -147,7 +155,7 @@ function EditEmployee() {
 }
 
 const styles = {
-  wrapper: { fontFamily: "'Inter','Segoe UI',sans-serif", padding: 32, backgroundColor: "#eff6ff", minHeight: "100vh" },
+  wrapper: { fontFamily: "'Inter','Segoe UI',sans-serif", padding: 32, backgroundColor: "transparent", minHeight: "auto" },
   card: { maxWidth: 700, margin: "0 auto", backgroundColor: "#fff", borderRadius: 16, padding: 32, boxShadow: "0 2px 8px rgba(29,78,216,0.08)", border: "1px solid #dbeafe" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
   pageTitle: { fontSize: 22, fontWeight: "700", color: "#1e3a8a", margin: 0 },

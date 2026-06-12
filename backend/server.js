@@ -6,7 +6,7 @@ const helmet     = require("helmet");
 const path       = require("path");
 const logger     = require("./utils/logger");
 const compression = require("compression");
-
+const payrollRoutes = require("./routes/payroll");
 const authRoutes         = require("./routes/auth");
 const userRoutes         = require("./routes/user");
 const departmentRoutes   = require("./routes/departments");
@@ -47,6 +47,7 @@ app.use((req, res, next) => {
 
 // ─── ROUTES ───────────────────────────────────────────
 app.use("/api/auth",          authRoutes);
+app.use("/api/payroll", payrollRoutes);
 app.use("/api/user",          userRoutes);
 app.use("/api/departments",   departmentRoutes);
 app.use("/api/skills",        skillRoutes);

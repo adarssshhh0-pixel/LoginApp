@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { handleApiError } from "../utils/apiError";
 import PasswordInput from "../components/PasswordInput";
+import Layout from "../components/Layout";
 
 function CreateEmployee() {
   const [departments, setDepartments] = useState([]);
@@ -91,7 +92,14 @@ function CreateEmployee() {
             <button style={styles.backBtn}>← Back</button>
           </Link>
         </div>
-
+         <div style={styles.wrapper}>
+    ...
+  </div>
+   <Layout>
+    <div style={{ ...styles.wrapper, backgroundColor: "transparent", minHeight: "auto" }}>
+      ...
+    </div>
+  </Layout>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.sectionTitle}>👤 Account Information</div>
           <div style={styles.grid2}>
@@ -227,11 +235,11 @@ function CreateEmployee() {
 }
 
 const styles = {
-  wrapper: {
-    fontFamily: "'Inter','Segoe UI',sans-serif",
-    padding: 32,
-    backgroundColor: "#eff6ff",
-    minHeight: "100vh",
+  wrapper: { 
+    fontFamily: "'Inter','Segoe UI',sans-serif", 
+    padding: 32, 
+    backgroundColor: "transparent", 
+    minHeight: "auto" 
   },
   card: {
     maxWidth: 700,

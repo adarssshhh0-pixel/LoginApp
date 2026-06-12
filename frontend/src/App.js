@@ -21,11 +21,22 @@ import Profile        from "./pages/Profile";
 import Attendance     from "./pages/Attendance";
 import MyAttendance   from "./pages/MyAttendance";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import Payroll   from "./pages/Payroll";
+import MyPayroll from "./pages/MyPayroll";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        <Route path="/payroll" element={
+        <ProtectedRoute roles={["admin","hr"]}>
+            <Payroll />
+        </ProtectedRoute>
+        } />
+        <Route path="/my-payroll" element={
+        <ProtectedRoute><MyPayroll /></ProtectedRoute>
+        } />
 
         {/* Public */}
         <Route path="/"                element={<Login />} />
