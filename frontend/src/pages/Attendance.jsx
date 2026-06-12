@@ -28,7 +28,7 @@ const STATUS_COLORS = {
 };
 
 function Attendance() {
-  const [tab, setTab] = useState("mark");
+  const [tab] = useState("mark");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState({});
