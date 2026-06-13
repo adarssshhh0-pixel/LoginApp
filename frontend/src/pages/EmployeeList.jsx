@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { handleApiError } from "../utils/apiError";
-import { setCache, getCache } from "../utils/cache";
 import Layout from "../components/Layout";
 
 export default function EmployeeList() {
@@ -11,17 +10,38 @@ export default function EmployeeList() {
   const [search, setSearch]       = useState("");
   const token    = localStorage.getItem("token");
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [sortBy, setSortBy] = useState("id");
+  const [order, setOrder] = useState("DESC");
+  const [department, setDepartment] = useState("");
 
   useEffect(() => {
     const fetchEmployees = async () => {
-      const cached = getCache("employees");
-      if (cached) { setEmployees(cached); setLoading(false); return; }
+   
       try {
-        const res = await axios.get("http://localhost:5000/api/employees", {
-          headers: { Authorization: token },
-        });
-        setCache("employees", res.data, 30);
-        setEmployees(res.data);
+        const res = await axios.get(
+  `http://localhost:5000/api/employees?page=${page}&limit=10&search=${search}&department=${department}&sortBy=${sortBy}&order=${order}` ,
+  {
+    headers: { Authorization: token },
+  }
+);
+       console.log("API Response:", res.data);
+
+const employeeData =
+  Array.isArray(res.data)
+    ? res.data
+    : Array.isArray(res.data?.employees)
+    ? res.data.employees
+    : Array.isArray(res.data?.data)
+    ? res.data.data
+    : [];
+
+
+setEmployees(employeeData);
+setTotalPages(res.data.totalPages || 1);
+setTotalEmployees(res.data.total || 0);
       } catch (err) {
         handleApiError(err, navigate);
       } finally {
@@ -29,7 +49,7 @@ export default function EmployeeList() {
       }
     };
     fetchEmployees();
-  }, [token, navigate]);
+}, [page, token, navigate, search, department, sortBy, order]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this employee?")) return;
@@ -38,6 +58,7 @@ export default function EmployeeList() {
         headers: { Authorization: token },
       });
       setEmployees(prev => prev.filter(e => e.id !== id));
+      setTotalEmployees(prev => prev - 1);
     } catch (err) { handleApiError(err, navigate); }
   };
 
@@ -68,10 +89,19 @@ export default function EmployeeList() {
   const avatarColors = ["#4f8ef7","#10b981","#f59e0b","#8b5cf6","#ef4444","#06b6d4"];
   const avatarBg  = (name = "") => avatarColors[name.charCodeAt(0) % avatarColors.length];
   const initials  = (name = "") => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  const filtered  = employees.filter(e =>
-    [e.name, e.email, e.designation, e.department_name]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  );
+  console.log("employees =", employees);
+  console.log("type =", typeof employees);
+  console.log("isArray =", Array.isArray(employees));
+  console.log("Employees State:", employees);
+  const employeeList = Array.isArray(employees) ? employees : [];
+  const filtered = employeeList.filter((e) =>
+  [e.name, e.email, e.designation, e.department_name]
+    .some((v) =>
+      String(v || "")
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    )
+);
 
   return (
     <Layout>
@@ -79,17 +109,43 @@ export default function EmployeeList() {
 
         {/* Header */}
         <div style={s.header}>
-          <h1 style={s.title}>👥 All employees — {filtered.length} total</h1>
+          <h1 style={s.title}>👥 All employees — {totalEmployees} total</h1>
           <div style={s.headerRight}>
-            <div style={s.searchWrap}>
+            <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+  }}
+>
               <span style={s.searchIcon}>🔍</span>
               <input
                 style={s.search}
                 placeholder="Search employees..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => {
+  setSearch(e.target.value);
+  setPage(1);
+}}
               />
             </div>
+          <select
+  value={department}
+  onChange={(e) => {
+    setDepartment(e.target.value);
+    setPage(1);
+  }}
+  style={s.departmentSelect}
+  
+>
+  <option value="">All Departments</option>
+  <option>Software Development</option>
+  <option>Human Resources</option>
+  <option>Finance & Accounts</option>
+  <option>Sales</option>
+  <option>Digital Marketing</option>
+</select>
             <Link to="/employees/create">
               <button style={s.addBtn}>+ Add Employee</button>
             </Link>
@@ -107,12 +163,38 @@ export default function EmployeeList() {
             <div style={{ overflowX: "auto" }}>
               <table style={s.table}>
                 <thead>
-                  <tr>
-                    {["EMPLOYEE","DESIGNATION","DEPARTMENT","PHONE","SALARY","ROLE","ACTIONS"].map(h => (
-                      <th key={h} style={s.th}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+  <tr>
+    <th
+      style={{ ...s.th, cursor: "pointer" }}
+      onClick={() => {
+        setSortBy("name");
+        setOrder(order === "ASC" ? "DESC" : "ASC");
+      }}
+    >
+      EMPLOYEE
+    </th>
+
+    <th style={s.th}>DESIGNATION</th>
+
+    <th style={s.th}>DEPARTMENT</th>
+
+    <th style={s.th}>PHONE</th>
+
+    <th
+      style={{ ...s.th, cursor: "pointer" }}
+      onClick={() => {
+        setSortBy("salary");
+        setOrder(order === "ASC" ? "DESC" : "ASC");
+      }}
+    >
+      SALARY
+    </th>
+
+    <th style={s.th}>ROLE</th>
+
+    <th style={s.th}>ACTIONS</th>
+  </tr>
+</thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr><td colSpan={7} style={s.empty}>No employees found</td></tr>
@@ -153,6 +235,71 @@ export default function EmployeeList() {
                   })}
                 </tbody>
               </table>
+              <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "12px",
+    padding: "20px",
+  }}
+>
+  <button
+    disabled={page === 1}
+    onClick={() => setPage((p) => p - 1)}
+    style={{
+      padding: "8px 14px",
+      borderRadius: "8px",
+      border: "1px solid #ddd",
+      cursor: page === 1 ? "not-allowed" : "pointer",
+    }}
+  >
+    Previous
+  </button>
+
+  <span>
+    {Array.from(
+  { length: totalPages },
+  (_, i) => i + 1
+)
+.slice(
+  Math.max(0, page - 3),
+  Math.min(totalPages, page + 2)
+)
+.map((p) => (
+  <button
+    key={p}
+    onClick={() => setPage(p)}
+    style={{
+      backgroundColor:
+        page === p ? "#1a1f2e" : "#fff",
+      color:
+        page === p ? "#fff" : "#111827",
+      border: "1px solid #ddd",
+      borderRadius: 8,
+      padding: "8px 12px",
+      cursor: "pointer"
+    }}
+  >
+    {p}
+  </button>
+))}
+  </span>
+
+  <button
+    disabled={page === totalPages}
+    onClick={() => setPage((p) => p + 1)}
+    style={{
+      padding: "8px 14px",
+      borderRadius: "8px",
+      border: "1px solid #ddd",
+      cursor:
+        page === totalPages ? "not-allowed" : "pointer",
+    }}
+  >
+    Next
+  </button>
+</div>
             </div>
           )}
         </div>
@@ -176,6 +323,20 @@ const s = {
   th:         { padding: "11px 16px", fontSize: 11, fontWeight: "600", color: "#6b7280", letterSpacing: "0.05em", textAlign: "left", backgroundColor: "transparent", minHeight: "auto", borderBottom: "1px solid #f0f0f0", whiteSpace: "nowrap" },
   tr:         { borderBottom: "1px solid #f7f7f8" },
   td:         { padding: "13px 16px", verticalAlign: "middle", fontSize: 13, color: "#374151" },
+departmentSelect: {
+  height: "44px",
+  minWidth: "220px",
+  padding: "0 16px",
+  borderRadius: "12px",
+  border: "1px solid #dbe3ee",
+  backgroundColor: "#fff",
+  color: "#111827",
+  fontSize: "14px",
+  fontWeight: "500",
+  cursor: "pointer",
+  outline: "none",
+  transition: "all 0.2s ease",
+},
   empCell:    { display: "flex", alignItems: "center", gap: 11 },
   empAvatar:  { width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: "700", color: "#fff", flexShrink: 0 },
   empName:    { fontSize: 13.5, fontWeight: "600", color: "#111827" },

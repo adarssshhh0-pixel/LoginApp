@@ -13,6 +13,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { files: 5 } });
 
+
+
 // ─── CREATE EMPLOYEE ──────────────────────────────────
 router.post("/", auth, async (req, res) => {
   try {
@@ -49,11 +51,77 @@ router.post("/", auth, async (req, res) => {
 // ─── GET ALL EMPLOYEES ────────────────────────────────
 router.get("/", auth, async (req, res) => {
   try {
-    const result = await pool.query(`
+    const page = parseInt(req.query.page || 1);
+    const limit = parseInt(req.query.limit || 10);
+    const offset = (page - 1) * limit;
+
+    const search = req.query.search || "";
+    const department = req.query.department || "";
+
+    const sortBy = req.query.sortBy || "ep.id";
+    const order = req.query.order === "ASC" ? "ASC" : "DESC";
+
+    const allowedSortFields = {
+      name: "u.name",
+      salary: "ep.salary",
+      designation: "ep.designation",
+      created: "ep.created_at",
+      id: "ep.id",
+    };
+
+    const safeSort =
+      allowedSortFields[sortBy] || "ep.id";
+
+    let where = [];
+    let params = [];
+    let index = 1;
+
+    if (search) {
+      where.push(`
+        (
+          u.name ILIKE $${index}
+          OR u.email ILIKE $${index}
+          OR ep.designation ILIKE $${index}
+        )
+      `);
+      params.push(`%${search}%`);
+      index++;
+    }
+
+    if (department) {
+      where.push(`d.department_name = $${index}`);
+      params.push(department);
+      index++;
+    }
+
+    const whereClause =
+      where.length > 0
+        ? `WHERE ${where.join(" AND ")}`
+        : "";
+
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM employee_profiles ep
+      INNER JOIN users u ON ep.user_id = u.id
+      INNER JOIN departments d ON ep.department_id = d.id
+      ${whereClause}
+    `;
+
+    const countResult = await pool.query(
+      countQuery,
+      params
+    );
+
+    params.push(limit);
+    params.push(offset);
+
+    const result = await pool.query(
+      `
       SELECT
         ep.id,
         u.name,
         u.email,
+        u.role,
         d.department_name,
         ep.phone,
         ep.designation,
@@ -62,12 +130,29 @@ router.get("/", auth, async (req, res) => {
       FROM employee_profiles ep
       INNER JOIN users u ON ep.user_id = u.id
       INNER JOIN departments d ON ep.department_id = d.id
-      ORDER BY ep.id DESC
-    `);
-    res.json(result.rows);
+      ${whereClause}
+      ORDER BY ${safeSort} ${order}
+      LIMIT $${index}
+      OFFSET $${index + 1}
+      `,
+      params
+    );
+
+    const total =
+      Number(countResult.rows[0].total);
+
+    res.json({
+      data: result.rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
-    console.log("GET EMPLOYEES ERROR:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: error.message,
+    });
   }
 });
 

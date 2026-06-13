@@ -1,12 +1,15 @@
 require("dotenv").config();
 
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");
-const path       = require("path");
-const logger     = require("./utils/logger");
-const compression = require("compression");
-const payrollRoutes = require("./routes/payroll");
+const express      = require("express");
+const cors         = require("cors");
+const helmet       = require("helmet");
+const compression  = require("compression");
+const path         = require("path");
+const logger       = require("./utils/logger");
+const errorHandler = require("./middleware/errorHandler");
+const pool         = require("./config/db");
+
+// Import routes
 const authRoutes         = require("./routes/auth");
 const userRoutes         = require("./routes/user");
 const departmentRoutes   = require("./routes/departments");
@@ -18,36 +21,74 @@ const assetRoutes        = require("./routes/assets");
 const notificationRoutes = require("./routes/notifications");
 const reportRoutes       = require("./routes/reports");
 const attendanceRoutes   = require("./routes/attendance");
-const pool               = require("./config/db");
+const payrollRoutes      = require("./routes/payroll");
+
+// v1 API routes (new architecture)
+const v1Routes = require("./src/routes/v1/index");
+
+// Background jobs
+if (process.env.NODE_ENV !== "test") {
+  require("./src/jobs/scheduler");
+}
 
 const app = express();
 
-// ─── SECURITY & PERFORMANCE ───────────────────────────
-app.use(helmet());
+// ── Security & Performance ────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
-
-// ─── CORS ─────────────────────────────────────────────
 app.use(cors({
-  origin: "http://localhost:3000",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+  origin:         "http://localhost:3000",
+  methods:        ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+  credentials:    true,
 }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-app.use(express.json());
-
-// ─── STATIC FILES ─────────────────────────────────────
+// ── Static Files ──────────────────────────────────────────
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ─── REQUEST LOGGER ───────────────────────────────────
+// ── Request Logger ────────────────────────────────────────
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`);
+  logger.info(`${req.method} ${req.path} — ${req.ip}`);
   next();
 });
 
-// ─── ROUTES ───────────────────────────────────────────
+// ── Health Check ──────────────────────────────────────────
+app.get("/api/health", async (req, res) => {
+  try {
+    const dbResult = await pool.query("SELECT NOW()");
+    res.json({
+      status:      "UP",
+      timestamp:   new Date().toISOString(),
+      uptime:      `${Math.floor(process.uptime() / 60)}m ${Math.floor(process.uptime() % 60)}s`,
+      database:    { status: "UP", time: dbResult.rows[0].now },
+      memory: {
+        used:  `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+        total: `${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`,
+      },
+      environment: process.env.NODE_ENV || "development",
+      version:     "1.0.0",
+    });
+  } catch (error) {
+    res.status(500).json({ status: "DOWN", error: error.message });
+  }
+});
+
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ success: true, time: result.rows[0] });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ── v1 API (new architecture) ─────────────────────────────
+app.use("/api/v1", v1Routes);
+
+// ── Legacy routes (backward compatible) ──────────────────
 app.use("/api/auth",          authRoutes);
-app.use("/api/payroll", payrollRoutes);
 app.use("/api/user",          userRoutes);
 app.use("/api/departments",   departmentRoutes);
 app.use("/api/skills",        skillRoutes);
@@ -58,40 +99,18 @@ app.use("/api/assets",        assetRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reports",       reportRoutes);
 app.use("/api/attendance",    attendanceRoutes);
+app.use("/api/payroll",       payrollRoutes);
 
-// ─── DB TEST ──────────────────────────────────────────
-app.get("/test-db", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({ success: true, time: result.rows[0] });
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
+// ── 404 Handler ───────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.path} not found` });
 });
 
-// ─── TEMP EMAIL TEST ──────────────────────────────────
-app.get("/test-email", async (req, res) => {
-  try {
-    const sendOTPEmail = require("./utils/mailer");
-    await sendOTPEmail({
-      to:   process.env.EMAIL_USER,
-      name: "Test User",
-      otp:  "123456",
-    });
-    res.json({ success: true, message: "Email sent!" });
-  } catch (error) {
-    console.log("EMAIL ERROR:", error.message);
-    res.json({ success: false, error: error.message });
-  }
-});
+// ── Centralized Error Handler (MUST be last) ──────────────
+app.use(errorHandler);
 
-// ─── GLOBAL ERROR HANDLER ─────────────────────────────
-app.use((err, req, res, next) => {
-  logger.error(err.message);
-  res.status(500).json({ message: "Internal server error" });
+// ── Start Server ──────────────────────────────────────────
+const server = app.listen(process.env.PORT, () => {
+  logger.info(`🚀 Server running on port ${process.env.PORT} [${process.env.NODE_ENV || "development"}]`);
 });
-
-// ─── START SERVER ─────────────────────────────────────
-app.listen(process.env.PORT, () => {
-  logger.info(`Server running on port ${process.env.PORT}`);
-});
+module.exports = { app, server }; // Export for testing

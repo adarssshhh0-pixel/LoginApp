@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ems_db
+    environment:
+      POSTGRES_DB: LoginApp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: ems_backend
+    environment:
+      PORT: 5000
+      DB_HOST: postgres
+      DB_NAME: LoginApp
+      DB_USER: postgres
+      DB_PASSWORD: 123456
+      DB_PORT: 5432
+      JWT_SECRET: mysecretkey
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+
+  frontend:
+    build: ./frontend
+    container_name: ems_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
